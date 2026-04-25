@@ -48,7 +48,7 @@ abcl/
 
 1. **js/main.js** → altere `DATA_ACAMPAMENTO` e `FORMS_URL`
 2. **admin.html** → faça login e edite tudo pelo painel
-3. **assets/logo-abcl.png** → substitua a logo se necessário
+3. **assets/logo-abcl.svg** → substitua a logo se necessário
 
 ---
 
