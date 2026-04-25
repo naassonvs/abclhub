@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABCL Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --verde:       #2D6A4F;
+      --verde-mid:   #40916C;
+      --verde-claro: #74C69D;
+      --fundo:       #080F0B;
+      --card:        #0F1A14;
+      --card2:       #152218;
+      --texto:       #F0EDE6;
+      --suave:       rgba(240,237,230,0.5);
+      --borda:       rgba(64,145,108,0.2);
+      --radius:      8px;
+      --danger:      #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--fundo); color: var(--texto); min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-box {
+      width: 100%; max-width: 380px;
+      background: var(--card);
+      border: 1px solid var(--borda);
+      border-radius: 16px;
+      padding: 2.5rem;
+      animation: fadeUp .5s ease;
+    }
+
+    .login-logo {
+      width: 64px; height: 64px;
+      margin: 0 auto 1.5rem;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,.5));
+    }
+
+    .login-box h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      text-align: center;
+      color: var(--verde-claro);
+      margin-bottom: .3rem;
+    }
+
+    .login-box p { font-size: .8rem; text-align: center; color: var(--suave); margin-bottom: 2rem; }
+
+    .login-error {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 6px;
+      padding: .65rem 1rem;
+      font-size: .8rem;
+      color: #fca5a5;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    /* ── LAYOUT ADMIN ── */
+    #admin-screen { display: none; }
+
+    .admin-wrap { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--borda);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: .6rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--borda);
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-logo img { width: 32px; height: 32px; object-fit: contain; }
+
+    .sidebar-logo span {
+      font-family: 'Cinzel', serif;
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--verde-claro);
+    }
+
+    .nav-label {
+      font-size: .6rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--suave);
+      margin-bottom: .5rem;
+      margin-top: 1rem;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .6rem .75rem;
+      border-radius: 8px;
+      font-size: .84rem;
+      color: var(--suave);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+
+    .nav-item:hover { background: rgba(64,145,108,.1); color: var(--texto); }
+    .nav-item.active { background: rgba(64,145,108,.18); color: var(--verde-claro); }
+
+    .sidebar-footer { margin-top: auto; }
+
+    /* Main */
+    .main { flex: 1; padding: 2rem; overflow-y: auto; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--borda);
+    }
+
+    .page-header h1 { font-family: 'Cinzel', serif; font-size: 1.4rem; color: var(--texto); }
+    .page-header p  { font-size: .78rem; color: var(--suave); margin-top: .2rem; }
+
+    /* Tabs / sections */
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    /* Cards */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--borda);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .stat-card .sc-label { font-size: .65rem; letter-spacing: .15em; text-transform: uppercase; color: var(--suave); margin-bottom: .3rem; }
+    .stat-card .sc-value { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700; color: var(--verde-claro); }
+
+    /* Section card */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--borda);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-card h2 {
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--texto);
+      margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+
+    /* Form elements */
+    .field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .85rem; }
+
+    .field label {
+      font-size: .65rem;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--suave);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: var(--card2);
+      border: 1px solid var(--borda);
+      border-radius: 6px;
+      padding: .65rem .85rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;        /* ≥ 16px — evita zoom automático no iOS */
+      color: var(--texto);
+      outline: none;
+      transition: border-color .2s;
+      width: 100%;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: var(--verde-mid); }
+    .field input::placeholder, .field textarea::placeholder { color: rgba(240,237,230,.18); }
+    .field select option { background: #0a1610; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-family: 'Inter', sans-serif;
+      font-size: .78rem; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      padding: .6rem 1.2rem;
+      border-radius: 6px; border: none; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+
+    .btn:hover { opacity: .85; transform: translateY(-1px); }
+    .btn-solid   { background: var(--verde-mid); color: #fff; }
+    .btn-ghost   { background: var(--card2); border: 1px solid var(--borda); color: var(--suave); }
+    .btn-danger  { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; }
+    .btn-sm      { padding: .4rem .8rem; font-size: .72rem; }
+
+    /* Link list */
+    .link-row {
+      display: flex; align-items: center; gap: .75rem;
+      background: var(--card2);
+      border: 1px solid var(--borda);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      margin-bottom: .6rem;
+    }
+
+    .link-row-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+    .link-row-info { flex: 1; min-width: 0; }
+    .link-row-info .lr-title { font-size: .88rem; font-weight: 500; }
+    .link-row-info .lr-url   { font-size: .72rem; color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .link-row-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+
+    /* Image upload area */
+    .upload-area {
+      border: 2px dashed var(--borda);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+
+    .upload-area:hover { border-color: var(--verde-mid); background: rgba(64,145,108,.05); }
+
+    .upload-area input[type=file] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    .upload-preview {
+      width: 80px; height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin: 0 auto .75rem;
+      border: 2px solid var(--borda);
+      display: none;
+    }
+
+    .upload-text { font-size: .82rem; color: var(--suave); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--verde-mid);
+      color: #fff;
+      padding: .75rem 1.25rem;
+      border-radius: 8px;
+      font-size: .84rem;
+      font-weight: 500;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform .3s, opacity .3s;
+      z-index: 999;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+      display: none;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--borda);
+      border-radius: 14px;
+      padding: 2rem;
+      width: 100%; max-width: 480px;
+      animation: fadeUp .25s ease;
+    }
+
+    .modal h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--verde-claro); }
+
+    .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+    /* Preletor card */
+    .prel-card {
+      display: flex; gap: 1rem; align-items: flex-start;
+      background: var(--card2);
+      border: 1px solid var(--borda);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: .75rem;
+    }
+
+    .prel-photo {
+      width: 56px; height: 56px; flex-shrink: 0;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--borda);
+      background: rgba(64,145,108,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif; font-size: 1rem;
+      color: var(--verde-claro);
+    }
+
+    .prel-info { flex: 1; }
+    .prel-nome  { font-weight: 600; font-size: .9rem; }
+    .prel-local { font-size: .75rem; color: var(--verde-claro); margin-top: .1rem; }
+    .prel-tema  { font-size: .78rem; color: var(--suave); margin-top: .3rem; font-style: italic; }
+
+    /* Color picker */
+    .color-row { display: flex; align-items: center; gap: .75rem; }
+    .color-preview { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--borda); flex-shrink: 0; }
+    input[type=color] { width: 36px; height: 36px; border: none; background: none; cursor: pointer; padding: 0; }
+
+    /* Mobile sidebar toggle */
+    .mob-menu-btn {
+      display: none;
+      position: fixed; top: 1rem; left: 1rem; z-index: 50;
+      background: var(--card); border: 1px solid var(--borda);
+      border-radius: 8px; padding: .5rem; cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; left: -240px; top: 0; z-index: 40; transition: left .25s; height: 100vh; }
+      .sidebar.open { left: 0; }
+      .mob-menu-btn { display: flex; }
+      .main { padding: 1rem; padding-top: 3.5rem; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <img src="assets/logo-abcl.svg" alt="ABCL" class="login-logo" />
+    <h1>ABCL Admin</h1>
+    <p>Acesso restrito à equipe de organização</p>
+
+    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="seu usuário" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="btn btn-solid" onclick="doLogin()" style="width:100%; padding:.85rem; margin-top:.5rem; justify-content:center; font-size:.85rem;">
+      Entrar
+    </button>
+    <p style="font-size:.7rem; color:rgba(240,237,230,.2); text-align:center; margin-top:1rem;">
+      Apenas membros autorizados da organização.
+    </p>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══════════════════════════════════════════════════ -->
+<div id="admin-screen">
+  <!-- Mobile menu button -->
+  <button class="mob-menu-btn" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <div class="admin-wrap">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <img src="assets/logo-abcl.svg" alt="ABCL" />
+        <span>ABCL Admin</span>
+      </div>
+
+      <div class="nav-label">Geral</div>
+      <button class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+      <button class="nav-item" onclick="switchTab('links', this)">🔗 Hub de Links</button>
+      <button class="nav-item" onclick="switchTab('preletores', this)">🎤 Preletores</button>
+      <button class="nav-item" onclick="switchTab('conteudo', this)">✏️ Conteúdo</button>
+      <button class="nav-item" onclick="switchTab('visual', this)">🎨 Visual</button>
+
+      <div class="nav-label">Ferramentas</div>
+      <button class="nav-item" onclick="window.open('vendinha.html','_blank')">🛒 Vendinha</button>
+      <button class="nav-item" onclick="window.open('links.html','_blank')">👁 Ver Hub</button>
+      <button class="nav-item" onclick="window.open('index.html','_blank')">🌐 Ver Site</button>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="doLogout()" style="color:rgba(239,68,68,.7)">
+          🚪 Sair
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="tab active" id="tab-dashboard">
+        <div class="page-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Bem-vindo, <span id="user-name-display"></span></p>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="window.open('index.html','_blank')">
+            🌐 Ver site
+          </button>
+        </div>
+
+        <div class="grid-3">
+          <div class="stat-card">
+            <div class="sc-label">Links ativos</div>
+            <div class="sc-value" id="d-links-count">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Preletores</div>
+            <div class="sc-value" id="d-prel-count">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Vendas hoje</div>
+            <div class="sc-value" id="d-vendas">—</div>
+          </div>
+        </div>
+
+        <!-- Acesso rápido -->
+        <div class="section-card">
+          <h2>⚡ Acesso rápido</h2>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:.75rem;">
+            <button class="btn btn-ghost" onclick="switchTab('links', document.querySelector('[onclick*=\"links\"]'))" style="justify-content:center; padding:.85rem;">🔗 Editar Links</button>
+            <button class="btn btn-ghost" onclick="switchTab('preletores', null)" style="justify-content:center; padding:.85rem;">🎤 Preletores</button>
+            <button class="btn btn-ghost" onclick="switchTab('conteudo', null)" style="justify-content:center; padding:.85rem;">✏️ Conteúdo</button>
+            <button class="btn btn-solid" onclick="window.open('vendinha.html','_blank')" style="justify-content:center; padding:.85rem;">🛒 Abrir Vendinha</button>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>📅 Próximo evento</h2>
+          <div class="field-row">
+            <div>
+              <div style="font-size:.7rem; color:var(--suave); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.3rem;">Edição</div>
+              <div id="d-edicao" style="font-family:'Cinzel',serif; font-size:1.4rem; color:var(--verde-claro);">—</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem; color:var(--suave); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.3rem;">Data</div>
+              <div id="d-data" style="font-size:.9rem; color:var(--texto);">—</div>
+            </div>
+            <div>
+              <div style="font-size:.7rem; color:var(--suave); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.3rem;">Local</div>
+              <div id="d-local" style="font-size:.9rem; color:var(--texto);">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ HUB DE LINKS ══ -->
+      <div class="tab" id="tab-links">
+        <div class="page-header">
+          <div><h1>Hub de Links</h1><p>Gerencie os links exibidos na página /links</p></div>
+          <button class="btn btn-solid btn-sm" onclick="openLinkModal()">+ Novo link</button>
+        </div>
+
+        <div class="section-card">
+          <h2>🔗 Links ativos</h2>
+          <div id="links-list"></div>
+        </div>
+
+        <div class="section-card">
+          <h2>📝 Cabeçalho da página</h2>
+          <div class="field"><label>Nome / título</label><input type="text" id="h-nome" placeholder="ABCL" /></div>
+          <div class="field"><label>Subtítulo</label><input type="text" id="h-sub" placeholder="Acampamento Bíblico · Conselheiro Lafaiete" /></div>
+          <button class="btn btn-solid" onclick="saveHeader()">Salvar cabeçalho</button>
+        </div>
+      </div>
+
+      <!-- ══ PRELETORES ══ -->
+      <div class="tab" id="tab-preletores">
+        <div class="page-header">
+          <div><h1>Preletores</h1><p>Adicione e edite os preletores do acampamento</p></div>
+          <button class="btn btn-solid btn-sm" onclick="openPrelModal()">+ Novo preletor</button>
+        </div>
+
+        <div class="section-card">
+          <h2>🎤 Preletores cadastrados</h2>
+          <div id="prel-list"></div>
+        </div>
+      </div>
+
+      <!-- ══ CONTEÚDO ══ -->
+      <div class="tab" id="tab-conteudo">
+        <div class="page-header">
+          <div><h1>Conteúdo do Site</h1><p>Edite textos, datas e informações do evento</p></div>
+          <button class="btn btn-solid btn-sm" onclick="saveConteudo()">💾 Salvar tudo</button>
+        </div>
+
+        <div class="section-card">
+          <h2>📅 Dados do evento</h2>
+          <div class="field-row">
+            <div class="field"><label>Edição</label><input type="text" id="c-edicao" placeholder="13º" /></div>
+            <div class="field"><label>Ano</label><input type="text" id="c-ano" placeholder="2026" /></div>
+          </div>
+          <div class="field"><label>Datas</label><input type="text" id="c-data" placeholder="4 a 7 de Junho de 2026" /></div>
+          <div class="field"><label>Local</label><input type="text" id="c-local" placeholder="Sítio Recanto Del Rey — Queluzito/MG" /></div>
+          <div class="field"><label>Idade mínima</label><input type="text" id="c-idade" placeholder="A partir de 14 anos" /></div>
+        </div>
+
+        <div class="section-card">
+          <h2>💰 Valores e inscrição</h2>
+          <div class="field-row">
+            <div class="field"><label>Estadia (R$)</label><input type="number" id="c-estadia" placeholder="185" /></div>
+            <div class="field"><label>Diária (R$)</label><input type="number" id="c-diaria" placeholder="60" /></div>
+          </div>
+          <div class="field"><label>Abertura das inscrições</label><input type="text" id="c-inscricao" placeholder="A partir de 1º de Junho" /></div>
+          <div class="field"><label>Link Google Forms</label><input type="url" id="c-forms" placeholder="https://forms.gle/..." /></div>
+        </div>
+
+        <div class="section-card">
+          <h2>📞 Contato</h2>
+          <div class="field"><label>WhatsApp (com DDI, sem espaços)</label><input type="text" id="c-whats" placeholder="5531988262599" /></div>
+          <div class="field"><label>Versículo / tema bíblico</label><textarea id="c-versiculo" rows="2" placeholder="Efésios 2:19"></textarea></div>
+        </div>
+
+        <div class="section-card">
+          <h2>📝 Temas</h2>
+          <div style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--borda);">
+            <strong style="font-size:.82rem; color:var(--verde-claro);">Tema 1</strong>
+            <div class="field" style="margin-top:.75rem;"><label>Título</label><input type="text" id="t1-titulo" placeholder="Amar a Família de Deus" /></div>
+            <div class="field"><label>Subtítulo / livro</label><input type="text" id="t1-sub" placeholder="Um estudo sobre a Igreja Local..." /></div>
+          </div>
+          <div>
+            <strong style="font-size:.82rem; color:var(--verde-claro);">Tema 2</strong>
+            <div class="field" style="margin-top:.75rem;"><label>Título</label><input type="text" id="t2-titulo" placeholder="A Relativização da Verdade" /></div>
+            <div class="field"><label>Subtítulo / livro</label><input type="text" id="t2-sub" placeholder="Estudos sobre os tempos em que vivemos" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ VISUAL ══ -->
+      <div class="tab" id="tab-visual">
+        <div class="page-header">
+          <div><h1>Visual</h1><p>Personalize as cores e a logo do site</p></div>
+          <button class="btn btn-solid btn-sm" onclick="saveVisual()">💾 Salvar visual</button>
+        </div>
+
+        <div class="section-card">
+          <h2>🎨 Cores do site</h2>
+          <div class="field">
+            <label>Verde principal</label>
+            <div class="color-row">
+              <input type="color" id="v-verde" value="#40916C" oninput="previewColor(this,'v-verde-prev')" />
+              <div class="color-preview" id="v-verde-prev" style="background:#40916C"></div>
+              <span style="font-size:.8rem; color:var(--suave);" id="v-verde-hex">#40916C</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Verde claro (destaque)</label>
+            <div class="color-row">
+              <input type="color" id="v-claro" value="#74C69D" oninput="previewColor(this,'v-claro-prev')" />
+              <div class="color-preview" id="v-claro-prev" style="background:#74C69D"></div>
+              <span style="font-size:.8rem; color:var(--suave);" id="v-claro-hex">#74C69D</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Fundo</label>
+            <div class="color-row">
+              <input type="color" id="v-fundo" value="#0A1610" oninput="previewColor(this,'v-fundo-prev')" />
+              <div class="color-preview" id="v-fundo-prev" style="background:#0A1610"></div>
+              <span style="font-size:.8rem; color:var(--suave);" id="v-fundo-hex">#0A1610</span>
+            </div>
+          </div>
+          <p style="font-size:.73rem; color:var(--suave); margin-top:.5rem;">
+            As cores são salvas e aplicadas automaticamente no Hub de Links. Para o site principal (index.html), atualize as variáveis CSS em style.css.
+          </p>
+        </div>
+
+        <div class="section-card">
+          <h2>🖼 Logo</h2>
+          <div class="upload-area" onclick="document.getElementById('logo-upload').click()">
+            <input type="file" id="logo-upload" accept="image/*" onchange="previewLogo(this)" style="display:none" />
+            <img id="logo-preview" class="upload-preview" src="assets/logo-abcl.svg" style="display:block" />
+            <div class="upload-text">Clique para trocar a logo<br><span style="font-size:.7rem; opacity:.5">PNG ou SVG recomendado com fundo transparente</span></div>
+          </div>
+          <p style="font-size:.72rem; color:var(--suave); margin-top:.75rem;">
+            A logo é salva como base64 no navegador. Para produção, substitua o arquivo <code>assets/logo-abcl.png</code> no servidor.
+          </p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══ MODAL: LINK ══ -->
+<div class="modal-overlay" id="link-modal">
+  <div class="modal">
+    <h3 id="link-modal-title">Novo link</h3>
+    <input type="hidden" id="lm-id" />
+    <div class="field-row">
+      <div class="field"><label>Emoji / ícone</label><input type="text" id="lm-icon" placeholder="📋" maxlength="4" /></div>
+      <div class="field"><label>Título</label><input type="text" id="lm-label" placeholder="Inscrição" /></div>
+    </div>
+    <div class="field"><label>URL</label><input type="url" id="lm-url" placeholder="https://..." /></div>
+    <div class="field"><label>Descrição curta</label><input type="text" id="lm-desc" placeholder="Formulário oficial 2026" /></div>
+    <div class="field">
+      <label>Cor de fundo do ícone</label>
+      <div class="color-row">
+        <input type="color" id="lm-bg" value="#2d6a4f" />
+        <span style="font-size:.78rem; color:var(--suave);">ex: rgba(64,145,108,.25)</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeLinkModal()">Cancelar</button>
+      <button class="btn btn-solid" onclick="saveLink()">Salvar link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: PRELETOR ══ -->
+<div class="modal-overlay" id="prel-modal">
+  <div class="modal">
+    <h3 id="prel-modal-title">Novo preletor</h3>
+    <input type="hidden" id="pm-id" />
+    <div class="field-row">
+      <div class="field"><label>Nome</label><input type="text" id="pm-nome" placeholder="Paulo Silas" /></div>
+      <div class="field"><label>Cidade</label><input type="text" id="pm-cidade" placeholder="Poços de Caldas — MG" /></div>
+    </div>
+    <div class="field"><label>Tema</label><input type="text" id="pm-tema" placeholder="Amar a Família de Deus" /></div>
+    <div class="field"><label>Subtítulo do tema</label><input type="text" id="pm-sub" placeholder="Um estudo sobre a Igreja Local..." /></div>
+    <div class="field"><label>Biografia curta</label><textarea id="pm-bio" rows="3" placeholder="Breve apresentação do preletor — aparece no card do site."></textarea></div>
+    <div class="field">
+      <label>Foto (opcional)</label>
+      <div class="upload-area" style="padding:1rem;" onclick="document.getElementById('prel-photo-upload').click()">
+        <input type="file" id="prel-photo-upload" accept="image/*" style="display:none" onchange="previewPrelPhoto(this)" />
+        <img id="pm-photo-preview" src="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto .5rem;display:none;border:2px solid var(--borda);" />
+        <div class="upload-text" style="font-size:.78rem;">Clique para adicionar foto</div>
+      </div>
+      <input type="hidden" id="pm-photo" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closePrelModal()">Cancelar</button>
+      <button class="btn btn-solid" onclick="savePrel()">Salvar preletor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// AUTH — credenciais simples
+// ══════════════════════════════════════════════════
+const USERS = {
+  'naasson':  'abcl2026',
+  'haniel':   'abcl2026',
+  'mauri':    'abcl2026',
+  'admin':    'abcl@admin',
+};
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim().toLowerCase();
+  const p = document.getElementById('login-pass').value;
+  if (USERS[u] && USERS[u] === p) {
+    sessionStorage.setItem('abcl-auth', u);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    document.getElementById('user-name-display').textContent = u;
+    initAdmin();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('abcl-auth');
+  location.reload();
+}
+
+// Check session on load
+window.addEventListener('DOMContentLoaded', () => {
+  const u = sessionStorage.getItem('abcl-auth');
+  if (u) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    document.getElementById('user-name-display').textContent = u;
+    initAdmin();
+  }
+});
+
+// ══════════════════════════════════════════════════
+// STORAGE HELPERS
+// ══════════════════════════════════════════════════
+const get = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+const DEFAULT_LINKS = [
+  { id:1, icon:'📋', label:'Inscrição', desc:'Formulário oficial 2026', url:'https://forms.gle/VAdsxWVp7fedCzD76', bg:'rgba(64,145,108,.25)' },
+  { id:2, icon:'📸', label:'Instagram', desc:'@abcl.oficial', url:'https://instagram.com/', bg:'rgba(225,48,108,.22)' },
+  { id:3, icon:'▶️', label:'YouTube',   desc:'Mensagens e louvor', url:'https://youtube.com/', bg:'rgba(255,0,0,.18)' },
+  { id:4, icon:'💬', label:'WhatsApp',  desc:'(31) 98826-2599', url:'https://wa.me/5531988262599', bg:'rgba(37,211,102,.2)' },
+  { id:5, icon:'📍', label:'Localização', desc:'Sítio Recanto Del Rey — Queluzito/MG', url:'https://maps.google.com/?q=Queluzito+MG', bg:'rgba(66,133,244,.2)' },
+  { id:6, icon:'🏕', label:'Site do Acampamento', desc:'Informações e inscrições', url:'index.html', bg:'rgba(64,145,108,.18)' },
+];
+
+const DEFAULT_PREL = [
+  { id:1, nome:'Paulo Silas', cidade:'Poços de Caldas — MG', tema:'Amar a Família de Deus', sub:'Um estudo sobre a Igreja Local', bio:'', photo:'' },
+  { id:2, nome:'Evaldo Soares', cidade:'Córrego Fundo — MG', tema:'A Relativização da Verdade', sub:'Estudos sobre os tempos em que vivemos', bio:'', photo:'' },
+];
+
+const DEFAULT_CONT = {
+  edicao:'13º', ano:'2026', data:'4 a 7 de Junho de 2026', local:'Sítio Recanto Del Rey — Queluzito/MG',
+  idade:'A partir de 14 anos', estadia:'185', diaria:'60', inscricao:'A partir de 1º de Junho',
+  forms:'https://forms.gle/VAdsxWVp7fedCzD76', whats:'5531988262599',
+  versiculo:'Efésios 2:19',
+  t1titulo:'Amar a Família de Deus', t1sub:'Um estudo sobre a Igreja Local — Composição, Propósito e Futuro',
+  t2titulo:'A Relativização da Verdade', t2sub:'Estudos sobre os tempos em que vivemos',
+};
+
+function getLinks() { return get('abcl-links') || DEFAULT_LINKS; }
+function getPrels() { return get('abcl-preletores') || DEFAULT_PREL; }
+function getCont()  { return { ...DEFAULT_CONT, ...(get('abcl-conteudo') || {}) }; }
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+function initAdmin() {
+  renderDashboard();
+  renderLinks();
+  renderPrels();
+  loadConteudo();
+  loadVisual();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const links = getLinks();
+  const prels = getPrels();
+  const sales = JSON.parse(localStorage.getItem('abcl-sales') || '[]');
+  const cont  = getCont();
+
+  document.getElementById('d-links-count').textContent = links.length;
+  document.getElementById('d-prel-count').textContent  = prels.length;
+  document.getElementById('d-vendas').textContent      = sales.length;
+  document.getElementById('d-edicao').textContent = cont.edicao;
+  document.getElementById('d-data').textContent   = cont.data;
+  document.getElementById('d-local').textContent  = cont.local;
+}
+
+// ── LINKS ──
+function renderLinks() {
+  const links = getLinks();
+  document.getElementById('d-links-count').textContent = links.length;
+
+  const header = get('abcl-header') || { nome:'ABCL', sub:'Acampamento Bíblico · Conselheiro Lafaiete' };
+  document.getElementById('h-nome').value = header.nome;
+  document.getElementById('h-sub').value  = header.sub;
+
+  document.getElementById('links-list').innerHTML = links.map(l => `
+    <div class="link-row">
+      <span class="link-row-icon">${l.icon || '🔗'}</span>
+      <div class="link-row-info">
+        <div class="lr-title">${l.label}</div>
+        <div class="lr-url">${l.url || '—'}</div>
+      </div>
+      <div class="link-row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openLinkModal(${l.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteLink(${l.id})">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+let editingLinkId = null;
+
+function openLinkModal(id) {
+  editingLinkId = id || null;
+  const links = getLinks();
+  const l = id ? links.find(x => x.id === id) : null;
+
+  document.getElementById('link-modal-title').textContent = id ? 'Editar link' : 'Novo link';
+  document.getElementById('lm-icon').value  = l?.icon  || '';
+  document.getElementById('lm-label').value = l?.label || '';
+  document.getElementById('lm-url').value   = l?.url   || '';
+  document.getElementById('lm-desc').value  = l?.desc  || '';
+  document.getElementById('link-modal').classList.add('open');
+}
+
+function closeLinkModal() {
+  document.getElementById('link-modal').classList.remove('open');
+}
+
+function saveLink() {
+  const links = getLinks();
+  const obj = {
+    id:    editingLinkId || Date.now(),
+    icon:  document.getElementById('lm-icon').value.trim()  || '🔗',
+    label: document.getElementById('lm-label').value.trim() || 'Link',
+    url:   document.getElementById('lm-url').value.trim(),
+    desc:  document.getElementById('lm-desc').value.trim(),
+    bg:    'rgba(64,145,108,.2)',
+  };
+  if (editingLinkId) {
+    const idx = links.findIndex(x => x.id === editingLinkId);
+    if (idx !== -1) links[idx] = obj;
+  } else {
+    links.push(obj);
+  }
+  set('abcl-links', links);
+  closeLinkModal();
+  renderLinks();
+  toast('Link salvo!');
+}
+
+function deleteLink(id) {
+  if (!confirm('Remover este link?')) return;
+  const links = getLinks().filter(l => l.id !== id);
+  set('abcl-links', links);
+  renderLinks();
+  toast('Link removido.');
+}
+
+function saveHeader() {
+  set('abcl-header', {
+    nome: document.getElementById('h-nome').value.trim(),
+    sub:  document.getElementById('h-sub').value.trim(),
+  });
+  toast('Cabeçalho salvo!');
+}
+
+// ── PRELETORES ──
+function renderPrels() {
+  const prels = getPrels();
+  document.getElementById('d-prel-count').textContent = prels.length;
+
+  document.getElementById('prel-list').innerHTML = prels.map(p => `
+    <div class="prel-card">
+      ${p.photo
+        ? `<img src="${p.photo}" class="prel-photo" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--borda);" />`
+        : `<div class="prel-photo" style="font-size:1.1rem;">${p.nome.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>`}
+      <div class="prel-info">
+        <div class="prel-nome">${p.nome}</div>
+        <div class="prel-local">📍 ${p.cidade}</div>
+        <div class="prel-tema">${p.tema}${p.sub ? ` — ${p.sub}` : ''}</div>
+      </div>
+      <div style="display:flex;gap:.4rem;flex-shrink:0;">
+        <button class="btn btn-ghost btn-sm" onclick="openPrelModal(${p.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePrel(${p.id})">🗑</button>
+      </div>
+    </div>
+  `).join('') || '<p style="color:var(--suave);font-size:.85rem;">Nenhum preletor cadastrado.</p>';
+}
+
+let editingPrelId = null;
+
+function openPrelModal(id) {
+  editingPrelId = id || null;
+  const prels = getPrels();
+  const p = id ? prels.find(x => x.id === id) : null;
+
+  document.getElementById('prel-modal-title').textContent = id ? 'Editar preletor' : 'Novo preletor';
+  document.getElementById('pm-nome').value   = p?.nome   || '';
+  document.getElementById('pm-cidade').value = p?.cidade || '';
+  document.getElementById('pm-tema').value   = p?.tema   || '';
+  document.getElementById('pm-sub').value    = p?.sub    || '';
+  document.getElementById('pm-bio').value    = p?.bio    || '';
+  document.getElementById('pm-photo').value  = p?.photo  || '';
+
+  const prev = document.getElementById('pm-photo-preview');
+  if (p?.photo) { prev.src = p.photo; prev.style.display = 'block'; }
+  else { prev.style.display = 'none'; }
+
+  document.getElementById('prel-modal').classList.add('open');
+}
+
+function closePrelModal() {
+  document.getElementById('prel-modal').classList.remove('open');
+}
+
+function previewPrelPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('pm-photo').value = e.target.result;
+    const prev = document.getElementById('pm-photo-preview');
+    prev.src = e.target.result;
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePrel() {
+  const prels = getPrels();
+  const obj = {
+    id:     editingPrelId || Date.now(),
+    nome:   document.getElementById('pm-nome').value.trim(),
+    cidade: document.getElementById('pm-cidade').value.trim(),
+    tema:   document.getElementById('pm-tema').value.trim(),
+    sub:    document.getElementById('pm-sub').value.trim(),
+    bio:    document.getElementById('pm-bio').value.trim(),
+    photo:  document.getElementById('pm-photo').value,
+  };
+  if (editingPrelId) {
+    const idx = prels.findIndex(x => x.id === editingPrelId);
+    if (idx !== -1) prels[idx] = obj;
+  } else {
+    prels.push(obj);
+  }
+  set('abcl-preletores', prels);
+  closePrelModal();
+  renderPrels();
+  toast('Preletor salvo!');
+}
+
+function deletePrel(id) {
+  if (!confirm('Remover este preletor?')) return;
+  set('abcl-preletores', getPrels().filter(p => p.id !== id));
+  renderPrels();
+  toast('Preletor removido.');
+}
+
+// ── CONTEÚDO ──
+function loadConteudo() {
+  const c = getCont();
+  document.getElementById('c-edicao').value    = c.edicao;
+  document.getElementById('c-ano').value       = c.ano;
+  document.getElementById('c-data').value      = c.data;
+  document.getElementById('c-local').value     = c.local;
+  document.getElementById('c-idade').value     = c.idade;
+  document.getElementById('c-estadia').value   = c.estadia;
+  document.getElementById('c-diaria').value    = c.diaria;
+  document.getElementById('c-inscricao').value = c.inscricao;
+  document.getElementById('c-forms').value     = c.forms;
+  document.getElementById('c-whats').value     = c.whats;
+  document.getElementById('c-versiculo').value = c.versiculo;
+  document.getElementById('t1-titulo').value   = c.t1titulo;
+  document.getElementById('t1-sub').value      = c.t1sub;
+  document.getElementById('t2-titulo').value   = c.t2titulo;
+  document.getElementById('t2-sub').value      = c.t2sub;
+}
+
+function saveConteudo() {
+  const c = {
+    edicao:   document.getElementById('c-edicao').value.trim(),
+    ano:      document.getElementById('c-ano').value.trim(),
+    data:     document.getElementById('c-data').value.trim(),
+    local:    document.getElementById('c-local').value.trim(),
+    idade:    document.getElementById('c-idade').value.trim(),
+    estadia:  document.getElementById('c-estadia').value.trim(),
+    diaria:   document.getElementById('c-diaria').value.trim(),
+    inscricao:document.getElementById('c-inscricao').value.trim(),
+    forms:    document.getElementById('c-forms').value.trim(),
+    whats:    document.getElementById('c-whats').value.trim(),
+    versiculo:document.getElementById('c-versiculo').value.trim(),
+    t1titulo: document.getElementById('t1-titulo').value.trim(),
+    t1sub:    document.getElementById('t1-sub').value.trim(),
+    t2titulo: document.getElementById('t2-titulo').value.trim(),
+    t2sub:    document.getElementById('t2-sub').value.trim(),
+  };
+  set('abcl-conteudo', c);
+  renderDashboard();
+  toast('Conteúdo salvo com sucesso!');
+}
+
+// ── VISUAL ──
+function loadVisual() {
+  const v = get('abcl-visual') || {};
+  if (v.verde) { document.getElementById('v-verde').value = v.verde; document.getElementById('v-verde-prev').style.background = v.verde; }
+  if (v.claro) { document.getElementById('v-claro').value = v.claro; document.getElementById('v-claro-prev').style.background = v.claro; }
+  if (v.fundo) { document.getElementById('v-fundo').value = v.fundo; document.getElementById('v-fundo-prev').style.background = v.fundo; }
+}
+
+function previewColor(input, previewId) {
+  document.getElementById(previewId).style.background = input.value;
+}
+
+function saveVisual() {
+  set('abcl-visual', {
+    verde: document.getElementById('v-verde').value,
+    claro: document.getElementById('v-claro').value,
+    fundo: document.getElementById('v-fundo').value,
+  });
+  toast('Visual salvo!');
+}
+
+function previewLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('logo-preview').src = e.target.result;
+    set('abcl-logo', e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── UI UTILS ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name)?.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
