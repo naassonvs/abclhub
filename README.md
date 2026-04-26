@@ -1,4 +1,4 @@
-# 🏕️ ABCL — Plataforma do Acampamento Bíblico
+# 🏕️ ABCL HUB — Plataforma do Acampamento Bíblico
 
 Sistema completo com site público, hub de links, painel admin e vendinha.
 
