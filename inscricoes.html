@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Inscrições ABCL</title><link rel="stylesheet" href="css/style.css"/>
+<style>main{max-width:760px;margin:7rem auto 3rem;padding:0 1rem}.card{background:var(--fundo-card);border:1px solid var(--borda);border-radius:8px;padding:1.2rem;margin-bottom:1rem}.q-img{max-width:100%;border-radius:8px;margin:.6rem 0;}input,select,textarea{width:100%;padding:.7rem;background:#112218;border:1px solid var(--borda);color:var(--texto);border-radius:6px}.req{color:#ff7b7b}</style></head>
+<body><main><h1 id="ft"></h1><p id="fd" class="corpo" style="font-size:.9rem;margin:.4rem 0 1rem"></p><form id="form"></form><button class="btn btn-solid" onclick="submitForm()" type="button">Enviar inscrição</button></main>
+<script>
+const DEFAULT={title:'Inscrição — ABCL 2026',description:'',questions:[]};
+const get=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const cfg={...DEFAULT,...(get('abcl-inscricao-form')||{})};
+document.getElementById('ft').textContent=cfg.title;document.getElementById('fd').textContent=cfg.description;
+const form=document.getElementById('form');
+form.innerHTML=(cfg.questions||[]).map((q,i)=>`<div class=card><label><strong>${i+1}. ${q.label||''}</strong> ${q.required?'<span class=req>*</span>':''}</label>${q.image?`<img class=q-img src="${q.image}" alt="Imagem da pergunta ${i+1}"/>`:''}${q.type==='textarea'?`<textarea ${q.required?'required':''} name="q_${q.id}"></textarea>`:q.type==='select'?`<select ${q.required?'required':''} name="q_${q.id}"><option value="">Selecione</option>${(q.options||[]).map(o=>`<option>${o}</option>`).join('')}</select>`:`<input type="${q.type||'text'}" ${q.required?'required':''} name="q_${q.id}"/>`}</div>`).join('');
+function submitForm(){if(!form.reportValidity()) return; const data=Object.fromEntries(new FormData(form).entries()); const all=get('abcl-inscricao-respostas')||[]; all.push({id:Date.now(),date:new Date().toISOString(),data}); localStorage.setItem('abcl-inscricao-respostas',JSON.stringify(all)); alert('Inscrição enviada com sucesso!'); form.reset();}
+</script></body></html>
