@@ -9,7 +9,7 @@
 const CONFIG = {
   DATA_ACAMPAMENTO: '2026-06-04T00:00:00',   // <- mude aqui a cada edição
   WHATSAPP_NUM:     '5531988262599',           // <- número sem + ou espaços
-  FORMS_URL:        'https://forms.gle/VAdsxWVp7fedCzD76', // <- link do Google Forms
+  FORMS_URL:        'inscricoes.html', // <- link do Google Forms
 };
 
 // ── Utilitários ─────────────────────────────────────────────

@@ -426,6 +426,7 @@
       <button class="nav-item" onclick="switchTab('visual', this)">🎨 Visual</button>
 
       <div class="nav-label">Ferramentas</div>
+      <button class="nav-item" onclick="switchTab('inscricoes', this)">📝 Inscrições</button>
       <button class="nav-item" onclick="window.open('vendinha.html','_blank')">🛒 Vendinha</button>
       <button class="nav-item" onclick="window.open('links.html','_blank')">👁 Ver Hub</button>
       <button class="nav-item" onclick="window.open('index.html','_blank')">🌐 Ver Site</button>
@@ -576,6 +577,30 @@
             <div class="field" style="margin-top:.75rem;"><label>Título</label><input type="text" id="t2-titulo" placeholder="A Relativização da Verdade" /></div>
             <div class="field"><label>Subtítulo / livro</label><input type="text" id="t2-sub" placeholder="Estudos sobre os tempos em que vivemos" /></div>
           </div>
+        </div>
+      </div>
+
+      <!-- ══ INSCRIÇÕES ══ -->
+      <div class="tab" id="tab-inscricoes">
+        <div class="page-header">
+          <div><h1>Formulário de Inscrições</h1><p>Monte perguntas no estilo Google Forms e publique em /inscricoes.html</p></div>
+          <button class="btn btn-solid btn-sm" onclick="saveInscricaoForm()">💾 Salvar formulário</button>
+        </div>
+
+        <div class="section-card">
+          <h2>⚙️ Configurações</h2>
+          <div class="field"><label>Título do formulário</label><input type="text" id="f-title" placeholder="Inscrição ABCL 2026" /></div>
+          <div class="field"><label>Descrição</label><textarea id="f-desc" rows="2" placeholder="Preencha seus dados para participar."></textarea></div>
+        </div>
+
+        <div class="section-card">
+          <h2>❓ Perguntas</h2>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="addInscricaoQuestion()">+ Nova pergunta</button>
+            <button class="btn btn-ghost btn-sm" onclick="downloadInscricaoRespostas()">⬇️ Baixar respostas (JSON)</button>
+            <button class="btn btn-danger btn-sm" onclick="clearInscricaoRespostas()">🧹 Limpar respostas</button>
+          </div>
+          <div id="f-questions" style="margin-top:1rem;"></div>
         </div>
       </div>
 
@@ -773,6 +798,7 @@ function initAdmin() {
   renderPrels();
   loadConteudo();
   loadVisual();
+  loadInscricaoForm();
 }
 
 // ── DASHBOARD ──
@@ -1037,6 +1063,55 @@ function previewLogo(input) {
   };
   reader.readAsDataURL(file);
 }
+
+
+
+const DEFAULT_INSCRICAO_FORM = {
+  title: 'Inscrição — ABCL 2026',
+  description: 'Preencha com atenção. Seus dados serão usados somente para organização do acampamento.',
+  questions: [
+    { id: 1, label: 'Nome completo', type: 'text', required: true, image: '' },
+    { id: 2, label: 'WhatsApp', type: 'tel', required: true, image: '' },
+    { id: 3, label: 'Idade', type: 'number', required: true, image: '' },
+    { id: 4, label: 'Modalidade', type: 'select', required: true, options: ['Estadia','Diária'], image: '' },
+  ],
+};
+function getInscricaoForm(){ return { ...DEFAULT_INSCRICAO_FORM, ...(get('abcl-inscricao-form')||{}) }; }
+function loadInscricaoForm(){
+  const f = getInscricaoForm();
+  document.getElementById('f-title').value = f.title || '';
+  document.getElementById('f-desc').value = f.description || '';
+  renderInscricaoQuestions();
+}
+function renderInscricaoQuestions(){
+  const wrap = document.getElementById('f-questions');
+  const f = getInscricaoForm();
+  wrap.innerHTML = (f.questions||[]).map((q,i)=>`
+    <div class="section-card" style="padding:1rem;margin-bottom:.8rem;">
+      <div class="field"><label>Pergunta ${i+1}</label><input type="text" value="${q.label||''}" onchange="updateQuestion(${q.id},'label',this.value)" /></div>
+      <div class="field-row">
+        <div class="field"><label>Tipo</label><select onchange="updateQuestion(${q.id},'type',this.value)">
+          <option value="text" ${q.type==='text'?'selected':''}>Texto curto</option>
+          <option value="textarea" ${q.type==='textarea'?'selected':''}>Parágrafo</option>
+          <option value="email" ${q.type==='email'?'selected':''}>E-mail</option>
+          <option value="tel" ${q.type==='tel'?'selected':''}>Telefone</option>
+          <option value="number" ${q.type==='number'?'selected':''}>Número</option>
+          <option value="date" ${q.type==='date'?'selected':''}>Data</option>
+          <option value="select" ${q.type==='select'?'selected':''}>Lista</option>
+        </select></div>
+        <div class="field"><label>Obrigatória</label><select onchange="updateQuestion(${q.id},'required',this.value==='true')"><option value="true" ${q.required?'selected':''}>Sim</option><option value="false" ${!q.required?'selected':''}>Não</option></select></div>
+      </div>
+      <div class="field"><label>Imagem (URL)</label><input type="url" value="${q.image||''}" onchange="updateQuestion(${q.id},'image',this.value)" placeholder="https://..." /></div>
+      <div class="field" ${q.type==='select'?'':'style="display:none"'}><label>Opções (separadas por ;)</label><input type="text" value="${(q.options||[]).join(';')}" onchange="updateQuestion(${q.id},'options',this.value.split(';').map(v=>v.trim()).filter(Boolean))" /></div>
+      <button class="btn btn-danger btn-sm" onclick="deleteInscricaoQuestion(${q.id})">Remover</button>
+    </div>`).join('');
+}
+function updateQuestion(id,key,val){ const f=getInscricaoForm(); f.questions=f.questions.map(q=>q.id===id?{...q,[key]:val}:q); set('abcl-inscricao-form',f); renderInscricaoQuestions(); }
+function addInscricaoQuestion(){ const f=getInscricaoForm(); f.questions.push({id:Date.now(),label:'Nova pergunta',type:'text',required:false,image:''}); set('abcl-inscricao-form',f); renderInscricaoQuestions();}
+function deleteInscricaoQuestion(id){ const f=getInscricaoForm(); f.questions=f.questions.filter(q=>q.id!==id); set('abcl-inscricao-form',f); renderInscricaoQuestions();}
+function saveInscricaoForm(){ const f=getInscricaoForm(); f.title=document.getElementById('f-title').value.trim(); f.description=document.getElementById('f-desc').value.trim(); set('abcl-inscricao-form',f); toast('Formulário salvo e publicado em inscricoes.html'); }
+function downloadInscricaoRespostas(){ const respostas = get('abcl-inscricao-respostas') || []; const blob = new Blob([JSON.stringify(respostas,null,2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'abcl-inscricoes-respostas.json'; a.click(); URL.revokeObjectURL(a.href); }
+function clearInscricaoRespostas(){ if(!confirm('Isso removerá todas as respostas salvas neste navegador. Continuar?')) return; localStorage.removeItem('abcl-inscricao-respostas'); toast('Respostas removidas deste navegador.'); }
 
 // ── UI UTILS ──
 function switchTab(name, btn) {
