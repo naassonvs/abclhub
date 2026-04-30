@@ -595,7 +595,11 @@
 
         <div class="section-card">
           <h2>❓ Perguntas</h2>
-          <button class="btn btn-ghost btn-sm" onclick="addInscricaoQuestion()">+ Nova pergunta</button>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="addInscricaoQuestion()">+ Nova pergunta</button>
+            <button class="btn btn-ghost btn-sm" onclick="downloadInscricaoRespostas()">⬇️ Baixar respostas (JSON)</button>
+            <button class="btn btn-danger btn-sm" onclick="clearInscricaoRespostas()">🧹 Limpar respostas</button>
+          </div>
           <div id="f-questions" style="margin-top:1rem;"></div>
         </div>
       </div>
@@ -1106,6 +1110,8 @@ function updateQuestion(id,key,val){ const f=getInscricaoForm(); f.questions=f.q
 function addInscricaoQuestion(){ const f=getInscricaoForm(); f.questions.push({id:Date.now(),label:'Nova pergunta',type:'text',required:false,image:''}); set('abcl-inscricao-form',f); renderInscricaoQuestions();}
 function deleteInscricaoQuestion(id){ const f=getInscricaoForm(); f.questions=f.questions.filter(q=>q.id!==id); set('abcl-inscricao-form',f); renderInscricaoQuestions();}
 function saveInscricaoForm(){ const f=getInscricaoForm(); f.title=document.getElementById('f-title').value.trim(); f.description=document.getElementById('f-desc').value.trim(); set('abcl-inscricao-form',f); toast('Formulário salvo e publicado em inscricoes.html'); }
+function downloadInscricaoRespostas(){ const respostas = get('abcl-inscricao-respostas') || []; const blob = new Blob([JSON.stringify(respostas,null,2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'abcl-inscricoes-respostas.json'; a.click(); URL.revokeObjectURL(a.href); }
+function clearInscricaoRespostas(){ if(!confirm('Isso removerá todas as respostas salvas neste navegador. Continuar?')) return; localStorage.removeItem('abcl-inscricao-respostas'); toast('Respostas removidas deste navegador.'); }
 
 // ── UI UTILS ──
 function switchTab(name, btn) {
